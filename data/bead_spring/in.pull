@@ -1,0 +1,38 @@
+# Sample script 
+# INPUT FILE FOR STRETCHING FIBER 
+
+#---------------------Setup------------------------------------------------------------
+units 		si
+dimension 	3
+processors 	1 1 1
+boundary        f f f
+atom_style 	molecular
+bond_style      harmonic
+angle_style     harmonic
+read_data       1fil.data 
+neighbor        5e-03  bin 
+pair_style lj/cut 0.05
+pair_coeff 1 1 0.0 4e-04  1.0e-04
+pair_coeff 1 2 0.0 4e-04  1.0e-04
+pair_coeff 2 2 0.0 4e-04  1.0e-04
+group atbound type 2
+group at1 id 1 
+group at2 id 10
+velocity        atbound set 0.0 0.0 0.0  units box
+fix             21 at1 setforce 0.00 0.00 0.00
+fix             22 at2 setforce 0.00 0.00 0.00
+timestep  1.0e-07
+thermo    500
+thermo_style 	custom step etotal temp press pe ke pxx
+dump             xyzDump all xyz 10000 dump.md.xyz
+run	            1000000
+undump             xyzDump 
+#---------------------Stretching------------------------------------------------------------
+reset_timestep 0
+dump             xyzDumpPULL all xyz  1000 dumpPULL.md.xyz
+fix             222 all deform 1 x vel   0.5
+run  1000000
+unfix 222
+
+
+
