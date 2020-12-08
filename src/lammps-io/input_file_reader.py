@@ -19,78 +19,41 @@ from mpl_toolkits.mplot3d import Axes3D
 Setup
 '''
 
-def nodes_and_bonds(node_filename, bond_filename,
-                    scale_down_factor, frac):
+def nodes_and_bonds(node_filename, bond_filename, scale_factor=1.0, frac=1.0):
+    ''' Read in node and bond data from CSV files, scale down the coordinates,
+    and return lists containing all nodes and their bonds within a specified
+    fraction of the original rectangular prism containing all nodes.
 
-    #import bonds
-    bonds = []
-    with open(bond_filename, 'r') as node_data:
-        lines = node_data.readlines()
-        for line in lines:
-            line_list = [int(x) for x in line.split(',')]      
-            bonds.append(line_list)
-    node_data.close()
-    #return bonds
-    
-    #import nodes and scale down
-    nodes = []
-    with open(node_filename, 'r') as node_data:
-        lines = node_data.readlines()
-        for line in lines:
-            line_list = [float(x)/scale_down_factor 
-                         for x in line.split(',')]           
-            nodes.append((line_list))
-    
-    node_data.close()
-    
-    # make bonds list with coords instead of node numbers
-    
-    bonds_coord = []
-    for bond in bonds:
-        node_1 = int(bond[0]) - 1
-        node_2 = int(bond[1]) - 1
-        
-        coord_1 = nodes[node_1]
-        coord_2 = nodes[node_2]
-    
-        bond_coord = [coord_1, coord_2]
-        bonds_coord.append(bond_coord)
-    
-    #cut nodes, then bonds
-    # try to make node coordinates smaller
+    :param node_filename: `str` the file path to a CSV file of node_1,node_2 data
+    :param bond_filename: `str` the file path to a CSV file of x,y or x,y,z data for each node
+    :param scale_factor: `float` how much the coordinates of each node should be scaled by
+    '''
 
-    nodes_array = np.array(nodes)
-    xmax = max(nodes_array[:,0])*frac
-    ymax = max(nodes_array[:,1])*frac
-    zmax = max(nodes_array[:,2])*frac
-    # convert back to nested list   
+    # read in bonds from file
+    # bond number = line number - 1 due to zero-indexing
+    # list of [node_1, node_2] representing the numbers of the two nodes a bond connects
+    bonds = np.array([[int(num) - 1 for num in line.strip().split(',')]
+                        for line in open(bond_filename, 'r')])
     
-    short_nodes = []
-    for node in nodes_array:   
-        node = list(node)
-        if node[0] <= xmax and node[1] <= ymax and node[2] <= zmax:
-            short_nodes.append(node)        
-            
-    # go through bonds_coord 
-    # and remove missing nodes from short nodes list
-    short_bonds_coord = []
-    for bond in bonds_coord:
-        if bond[0] in short_nodes and bond[1] in short_nodes:
-                short_bonds_coord.append(bond)
-    
-    # revert from bonds_coord to bond index
-    short_bonds = []
-    for bond_coord in short_bonds_coord:
-        node_1_coord = bond_coord[0] 
-        node_2_coord = bond_coord[1] 
-        
-        node_1 = short_nodes.index(node_1_coord) + 1
-        node_2 = short_nodes.index(node_2_coord) + 1
-        
-        bond = [node_1, node_2]
-        short_bonds.append(bond)
-        
-    return short_nodes, short_bonds
+    # read in nodes from file
+    # list of [x, y] or [x, y, z] representing coordinates of each node
+    nodes = np.array([[float(coord)*scale_factor for coord in line.strip().split(',')]
+                      for line in open(node_filename, 'r')])
+
+    # find all nodes within a rectangular prism with the dimensions of the
+    # rectangular prism containing all the nodes multiplied by a factor of frac
+    # ASSUMPTION: all coordinates are greater than or equal to 0
+    coordinate_limits = nodes.max(axis=0)*frac
+    valid_node_indices = np.all(nodes <= coordinate_limits, axis=1)
+    bounded_nodes = nodes[valid_node_indices]
+
+    # find the new node indices for each bond (add 1 so output is 1-indexed, like input)
+    bounded_bonds = np.array([
+        [np.sum(valid_node_indices[:bond[0]]) + 1, np.sum(valid_node_indices[:bond[1]]) + 1]
+        for bond in bonds if valid_node_indices[bond[0]] and valid_node_indices[bond[1]]
+    ])
+
+    return bounded_nodes.tolist(), bounded_bonds.tolist()
 
 def plot_mesh(nodes, bonds):
 
