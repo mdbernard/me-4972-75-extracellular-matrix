@@ -20,10 +20,11 @@ from input_file_reader import write_input_file
 
 #import itertools
 import numpy as np
+from time import time
+start = time()
 
-
-node_list = "node_list.dat"
-bond_list = "link_info.dat"
+node_list = "/Users/mike/Downloads/MD_Dec2020/ECM_3D/node_list.dat"
+bond_list = "/Users/mike/Downloads/MD_Dec2020/ECM_3D/link_info.dat"
 
 '''
 ECM parameter definition: uniform parameters
@@ -38,14 +39,14 @@ harm_bond_coeff = 1e-11
 angle_coeff = 0.0
 
 
-filename = '3D_input_file.data' # input file name
+filename = '/Users/mike/Downloads/MD_Dec2020/ECM_3D/3D_input_file.data' # input file name
 
 
 '''
 Scale down
 '''
 
-scale_down_factor = 1 # scale down coordinate points
+scale_factor = 1 # scale down coordinate points
 frac = 0.8
 
 ## work on changing import_bond_list later
@@ -55,7 +56,7 @@ Setup
 '''
 
 nodes, bonds = nodes_and_bonds(node_list, bond_list, 
-                               scale_down_factor, frac)
+                               scale_factor, frac)
 
 ## bugs
 ## graph has unconnected nodes
@@ -127,3 +128,6 @@ write_input_file(nodes, bonds, node_triplet,
                      Masses, Bond_Coeffs, Angle_Coeffs,
                      Atoms, Bonds, Angles, 
                      filename)
+end = time()
+dur = end - start
+print(f'Total Time: {dur:.3f} sec')
