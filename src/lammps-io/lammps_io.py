@@ -99,7 +99,7 @@ def find_triplets(G, timeit=False):
     for node_0 in G.nodes:
         for node_1 in G.adj[node_0]:
             for node_2 in G.adj[node_1]:
-                if len(set([node_0, node_1, node_2])) == 3:
+                if node_2 != node_0:  # avoid doublets
                     triplets.append([node_0, node_1, node_2])
     
     triplets = np.array(triplets)
