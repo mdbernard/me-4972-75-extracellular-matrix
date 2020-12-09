@@ -73,9 +73,9 @@ def calc_connection_lengths(G, timeit=False):
         how_edgy[node] = {}
         coords_1 = G.nodes[node]['coords']
         conns = G.adj[node]
-        for conn in conns:
-            coords_2 = G.nodes[conn]['coords']
-            how_edgy[node][conn] = np.linalg.norm(coords_2 - coords_1)
+        for flight_of_the_conn in conns:
+            coords_2 = G.nodes[flight_of_the_conn]['coords']  # heh
+            how_edgy[node][flight_of_the_conn] = np.linalg.norm(coords_2 - coords_1)
     
     if timeit:
         print(time() - start)
